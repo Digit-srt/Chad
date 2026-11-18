@@ -70,7 +70,7 @@ jobs:
             rm -- "release/stage/$PACKAGE/MerhabaChad.desktop"
           fi
           if [[ "$RUNNER_OS" == Windows ]]; then
-            tar -a -cf "release/Chad-$PLATFORM.zip" -C release/stage .
+            python -m zipfile -c "release/Chad-$PLATFORM.zip" "release/stage/$CLI" release/stage/README.md "release/stage/$PACKAGE"
           else
             tar -czf "release/Chad-$PLATFORM.tar.gz" -C release/stage .
           fi
