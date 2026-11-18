@@ -1,0 +1,17 @@
+[package]
+name = "chad"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Google Chrome uygulama moduyla çalışan küçük web uygulaması paketleyicisi"
+autobins = false
+
+[[bin]]
+name = "Chad"
+path = "src/main.rs"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"

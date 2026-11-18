@@ -1,0 +1,127 @@
+name: Build Chad
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            platform: windows-x64
+            cli: Chad.exe
+            package: MerhabaChad
+          - runner: ubuntu-22.04
+            platform: linux-x64
+            cli: Chad
+            package: MerhabaChad
+          - runner: macos-15
+            platform: macos-arm64
+            cli: Chad
+            package: MerhabaChad.app
+          - runner: macos-15-intel
+            platform: macos-x64
+            cli: Chad
+            package: MerhabaChad.app
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Build and test Rust
+        shell: bash
+        run: |
+          rustup toolchain install stable --profile minimal
+          cargo +stable test --locked
+          cargo +stable build --release --locked
+      - name: Build example package
+        shell: bash
+        env:
+          CLI: ${{ matrix.cli }}
+          PACKAGE: ${{ matrix.package }}
+        run: |
+          ./target/release/"$CLI" -build ornek/index.html --name MerhabaChad --out "dist/$PACKAGE"
+          case "$RUNNER_OS" in
+            Windows) test -f "dist/$PACKAGE/MerhabaChad.exe" && test -f "dist/$PACKAGE/app/index.html" ;;
+            Linux) test -x "dist/$PACKAGE/Chad" && test -f "dist/$PACKAGE/app/index.html" && test -f "dist/$PACKAGE/MerhabaChad.desktop" ;;
+            macOS) codesign --verify --strict "dist/$PACKAGE" && test -f "dist/$PACKAGE/Contents/Resources/app/index.html" ;;
+          esac
+      - name: Archive CLI and example
+        shell: bash
+        env:
+          CLI: ${{ matrix.cli }}
+          PACKAGE: ${{ matrix.package }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          mkdir -p release/stage
+          cp "target/release/$CLI" README.md release/stage/
+          cp -R "dist/$PACKAGE" release/stage/
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            rm -- "release/stage/$PACKAGE/MerhabaChad.desktop"
+          fi
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            tar -a -cf "release/Chad-$PLATFORM.zip" -C release/stage .
+          else
+            tar -czf "release/Chad-$PLATFORM.tar.gz" -C release/stage .
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: |
+            release/*.zip
+            release/*.tar.gz
+          if-no-files-found: error
+
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android API 35
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build and verify example APK
+        run: |
+          rustup toolchain install stable --profile minimal
+          cargo +stable build --release --locked
+          ./target/release/Chad -build ornek/index.html --name MerhabaChad --target android --site https://app.example.com/ --app-id org.chad.example
+          test -f dist/MerhabaChad-android/MerhabaChad.apk
+          test -f dist/MerhabaChad-android/web/index.html
+          python -m json.tool dist/MerhabaChad-android/web/.well-known/assetlinks.json
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [desktop, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          path: release
+          merge-multiple: true
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CHAD_TAG: ${{ github.ref_name }}
+        run: gh release create "$CHAD_TAG" release/* --verify-tag --generate-notes

@@ -1,0 +1,21 @@
+plugins {
+    id 'com.android.application' version '8.9.2'
+}
+
+android {
+    namespace 'org.chad.runtime'
+    compileSdk 35
+    buildToolsVersion '35.0.0'
+
+    defaultConfig {
+        applicationId '@APP_ID@'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '0.2.0'
+    }
+}
+
+dependencies {
+    implementation 'androidx.browser:browser:1.8.0'
+}

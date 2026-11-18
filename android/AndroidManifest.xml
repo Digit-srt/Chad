@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <package android:name="com.android.chrome" />
+    </queries>
+    <application
+        @ICON@
+        android:allowBackup="false"
+        android:label="@string/chad_app_name"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <meta-data android:name="asset_statements" android:resource="@string/chad_asset_statements" />
+        <activity android:name=".ChadActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

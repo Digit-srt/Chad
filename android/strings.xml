@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chad_app_name">@NAME@</string>
+    <string name="chad_origin" formatted="false">@ORIGIN@</string>
+    <string name="chad_start_url" formatted="false">@START_URL@</string>
+    <string name="chad_asset_statements" formatted="false">[{\"relation\":[\"delegate_permission/common.handle_all_urls\"],\"target\":{\"namespace\":\"web\",\"site\":\"@ORIGIN@\"}}]</string>
+    <string name="chad_checking">Google Chrome uygulama bağlantısını doğruluyor…</string>
+    <string name="chad_requires_chrome">Bu uygulama güncel Google Chrome gerektiriyor. Chrome’u kurup veya güncelleyip tekrar aç.</string>
+    <string name="chad_verification_failed">Uygulamanın HTTPS adresi doğrulanamadı. Bağlantını ve Digital Asset Links ayarını kontrol et.</string>
+</resources>
